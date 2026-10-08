@@ -1,0 +1,127 @@
+# ============================================================================
+# CI Pipeline — Validación Progresiva por Nivel de Rama (Flutter Puro)
+# ============================================================================
+#
+# La rigurosidad escala conforme el código se acerca a producción:
+#
+#   feat → feat       : Dart Format, Flutter Analyze (Tipos, Naming, Calidad)
+#   feat → phase      : (Reservado para validación de arquitectura en el futuro)
+#   phase → develop   : + Tests y Build (Compilación)
+#   develop → prod    : (Validación final)
+#
+# ============================================================================
+
+name: CI Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - production
+      - develop
+      - 'phase/**'
+      - 'feat/**'
+      - 'fix/**'
+      - 'refactor/**'
+      - 'chore/**'
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Validate PR
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      # ── Branch Flow Validation ─────────────────────────────────────────
+
+      - name: Validate Branch Flow Strategy
+        run: |
+          BASE_REF="${{ github.base_ref }}"
+          HEAD_REF="${{ github.head_ref }}"
+
+          echo "Target Branch (Base): $BASE_REF"
+          echo "Source Branch (Head): $HEAD_REF"
+
+          if [[ "$BASE_REF" == "production" ]]; then
+            if [[ "$HEAD_REF" != "develop" ]]; then
+              echo "❌ Error: The Flow Strategy forbids merging '$HEAD_REF' directly into 'production'. Only 'develop' can be merged into production."
+              exit 1
+            fi
+          fi
+
+          if [[ "$BASE_REF" == "develop" ]]; then
+            if [[ ! "$HEAD_REF" =~ ^(phase/|feat/|fix/|refactor/|chore/) ]]; then
+              echo "❌ Error: 'develop' can only receive PRs from 'phase/' branches or direct task branches (feat/, fix/, etc.). '$HEAD_REF' is not allowed."
+              exit 1
+            fi
+          fi
+
+      # ── Setup Flutter ──────────────────────────────────────────────────
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ── PR Title (Semantic) ────────────────────────────────────────────
+
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            chore
+          scopes: |            
+            deps
+            tools
+            docs
+            root
+            ci
+          requireScope: false
+          subjectPattern: ^(?=.{1,120}$)[a-zA-Z].+$
+
+      # ── Nivel 1: Base (TODAS las ramas) ────────────────────────────────
+      # Formato estricto y análisis estático (sintaxis, tipos estricto, variables sin uso)
+
+      - name: Code Formatting (Dart Format)
+        run: dart format --set-exit-if-changed .
+
+      - name: Static Analysis (Flutter Analyze)
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      # ── Nivel 2: phase → develop (+ Build + Tests) ─────────────────────
+
+      - name: Run Tests
+        if: >-
+          github.base_ref == 'develop'
+          || github.base_ref == 'production'
+        run: flutter test
+
+      - name: Build Android APK
+        if: >-
+          github.base_ref == 'develop'
+          || github.base_ref == 'production'
+        run: flutter build apk --debug

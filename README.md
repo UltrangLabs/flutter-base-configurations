@@ -30,7 +30,7 @@ Para poder arrancar la aplicación en tu emulador o dispositivo físico, ejecuta
    > dart run husky install
    > ```
    >
-   > *(Nota en Linux/WSL/macOS: Asegúrate de dar permisos de ejecución a los hooks con `chmod +x .husky/*` si experimentas problemas al hacer commit).*
+   > _(Nota en Linux/WSL/macOS: Asegúrate de dar permisos de ejecución a los hooks con `chmod +x .husky/_` si experimentas problemas al hacer commit).\*
 
 2. Inicia la aplicación en el dispositivo conectado por defecto:
 
@@ -100,7 +100,6 @@ El proyecto está fuertemente ligado a la configuración del formateador nativo 
     "Dockerfile": "docker*.yml, .dockerignore, Dockerfile.*"
   }
 }
-
 ```
 
 Para que esta configuración funcione correctamente, asegúrate de tener instaladas las siguientes extensiones oficiales en VS Code:

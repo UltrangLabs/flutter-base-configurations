@@ -1,0 +1,12 @@
+# =======================================================
+# Github PR Auto-Labeler Configuration (Flutter Version)
+# =======================================================
+
+
+'epic: ej-1':
+  - any:
+      - 'lib/modules/ej-1/**/*'
+
+'epic: ej-2':
+  - any:
+      - 'lib/modules/admindesk/**/*'
