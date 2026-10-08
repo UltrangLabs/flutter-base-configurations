@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "🚀 Validando estrategia de ramas Kanban..."
+echo "ℹ️ [INFO] 🚀 Validando estrategia de ramas Kanban antes de hacer push..."
 
 localBranchName=$(git rev-parse --abbrev-ref HEAD)
 validBranchRegex="^(production|develop|phase\/[0-9]+-[a-z0-9-]+|(feat|fix|docs|style|refactor|chore)\/[a-z0-9-]+)$"
@@ -12,10 +12,12 @@ if [ "$localBranchName" = "HEAD" ]; then
 fi
 
 if ! echo "$localBranchName" | grep -Eq "$validBranchRegex"; then
-    echo " Error: Nombre de rama inválido '$localBranchName'"
-    echo "Los nombres de las ramas deben seguir la estrategia Kanban del proyecto:"
+    echo "❌ [ERROR] Push bloqueado. Nombre de rama inválido: '$localBranchName'"
+    echo "⚠️ [ALERTA] Tu rama debe seguir la estrategia Kanban estricta:"
     echo "  - Ramas base: production, develop"
     echo "  - Ramas de fase: phase/<numero>-<nombre> (ejemplo: phase/01-core-database)"
     echo "  - Ramas de trabajo: <type>/<module>-<desc>-<ticket_id> (ejemplo: feat/core-tenant-model-3)"
     exit 1
 fi
+
+echo "✅ [ÉXITO] La rama actual cumple con la convención. Permitiendo el push..."

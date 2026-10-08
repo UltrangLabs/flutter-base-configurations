@@ -1,10 +1,16 @@
+#!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "🎨 Formateando archivos Dart en stage..."
+echo "ℹ️ [INFO] 🎨 Formateando archivos Dart en stage..."
 # Filtra solo los archivos .dart en stage, los formatea y los vuelve a agregar
 git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' | xargs -r dart format
 git diff --cached --name-only --diff-filter=ACM | grep '\.dart$' | xargs -r git add
 
-echo "🧐 Ejecutando análisis estricto..."
+echo "ℹ️ [INFO] 🧐 Ejecutando análisis estricto (dart analyze)..."
 # Falla el commit si rompes una regla de Clean Code
-dart analyze --fatal-infos --fatal-warnings
+if dart analyze --fatal-infos --fatal-warnings; then
+  echo "✅ [ÉXITO] Análisis estático completado sin problemas. Procediendo con el commit."
+else
+  echo "❌ [ERROR] El análisis estático ha fallado. Corrige los warnings/errores en tu código."
+  exit 1
+fi

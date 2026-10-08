@@ -1,5 +1,11 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "📝 Validando formato del commit..."
-dart run commitlint_cli --edit "$1"
+echo "ℹ️ [INFO] 📝 Validando formato del commit..."
+
+if dart run commitlint_cli --edit "$1"; then
+  echo "✅ [ÉXITO] El formato del commit es válido."
+else
+  echo "❌ [ERROR] El formato del commit es inválido. Sigue la convención: tipo(scope): mensaje"
+  exit 1
+fi
